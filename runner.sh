@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BINARY_NAME="advance"
+BINARY_NAME="dinning"
 
 if [ -f "$BINARY_NAME" ]; then
 	echo "removing old binary..."
