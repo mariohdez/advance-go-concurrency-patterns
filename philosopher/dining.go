@@ -108,12 +108,24 @@ func (d *Dinner) eat(ctx context.Context, pID int, lf, rf *sync.Mutex) {
 
 func (d *Dinner) monitor(ctx context.Context) {
 	defer d.wg.Done()
+	// Ansi escape codes to clear the screen and move the cursor to the top-left
+	const clearScreen = "\033[H\033[2J"
+
+	// ASCII art for the title
+	asciiArt := `
+.-----------------------------------.
+| The Dining Philosophers Problem   |
+'-----------------------------------'
+`
 
 	for {
 		select {
 		case <-ctx.Done():
+			fmt.Print(clearScreen)
 			return
 		default:
+			fmt.Print(clearScreen)
+			fmt.Print(asciiArt)
 			d.philosopherStatesMu.Lock()
 			for i := 0; i < d.philosopherCount; i++ {
 				fmt.Printf("p[%v] is %8v\t", i, d.philosopherStates[i])
