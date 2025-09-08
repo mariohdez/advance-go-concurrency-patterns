@@ -7,24 +7,45 @@ import (
 	"time"
 )
 
+type state string
+
+const (
+	pendingState  state = "PENDING"
+	eatingState   state = "EATING"
+	thinkingState state = "THINKING"
+	finishedState state = "FINISHED"
+)
+
 type Dinner struct {
-	pCount int
-	forks  []sync.Mutex
-	wg     sync.WaitGroup
+	philosopherCount    int
+	philosopherStates   []state
+	philosopherStatesMu sync.Mutex
+	forks               []sync.Mutex
+
+	wg sync.WaitGroup
 }
 
 func NewDinner(numPhilosophers int) *Dinner {
+	pStates := make([]state, 0, numPhilosophers)
+	for i := 0; i < numPhilosophers; i++ {
+		pStates = append(pStates, pendingState)
+	}
+
 	return &Dinner{
-		pCount: numPhilosophers,
-		forks:  make([]sync.Mutex, numPhilosophers, numPhilosophers),
+		philosopherCount:  numPhilosophers,
+		forks:             make([]sync.Mutex, numPhilosophers, numPhilosophers),
+		philosopherStates: pStates,
 	}
 }
 
 func (d *Dinner) Start(ctx context.Context) {
-	for i := 0; i < d.pCount; i++ {
+	for i := 0; i < d.philosopherCount; i++ {
 		d.wg.Add(1)
 		go d.philosopherWorker(ctx, i)
 	}
+
+	d.wg.Add(1)
+	go d.monitor(ctx)
 }
 
 func (d *Dinner) Wait() {
@@ -37,38 +58,76 @@ func (d *Dinner) philosopherWorker(ctx context.Context, pID int) {
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("philosopher=%v worker shutting down\n", pID)
+			d.philosopherStatesMu.Lock()
+			d.philosopherStates[pID] = finishedState
+			d.philosopherStatesMu.Unlock()
 			return
 		default:
-			d.think(pID)
+			d.think(ctx, pID)
 			leftFork := &d.forks[pID]
-			rightFork := &d.forks[(pID-1+d.pCount)%d.pCount]
+			rightFork := &d.forks[(pID-1+d.philosopherCount)%d.philosopherCount]
 
-			if pID == d.pCount-1 {
+			if pID == d.philosopherCount-1 {
 				// prevent the case where all the philosophers grab their left fork successfully
 				// and now the system is in dead-lock.
-				d.eat(pID, rightFork, leftFork)
+				d.eat(ctx, pID, rightFork, leftFork)
 			} else {
-				d.eat(pID, leftFork, rightFork)
+				d.eat(ctx, pID, leftFork, rightFork)
 			}
 		}
 	}
 }
 
-func (d *Dinner) think(pID int) {
-	fmt.Printf("philosopher=%v thinking.\n", pID)
-	time.Sleep(2 * time.Second)
-	fmt.Printf("philosopher=%v done thinking.\n", pID)
+func (d *Dinner) think(ctx context.Context, pID int) {
+	d.philosopherStatesMu.Lock()
+	d.philosopherStates[pID] = thinkingState
+	d.philosopherStatesMu.Unlock()
+
+	select {
+	case <-time.After(2 * time.Second):
+	case <-ctx.Done():
+	}
 }
 
-func (d *Dinner) eat(pID int, lf, rf *sync.Mutex) {
+func (d *Dinner) eat(ctx context.Context, pID int, lf, rf *sync.Mutex) {
 	lf.Lock()
 	defer lf.Unlock()
 
 	rf.Lock()
 	defer rf.Unlock()
 
-	fmt.Printf("philosopher=%v eating.\n", pID)
-	time.Sleep(1 * time.Second)
-	fmt.Printf("philosopher=%v done eating.\n", pID)
+	d.philosopherStatesMu.Lock()
+	d.philosopherStates[pID] = eatingState
+	d.philosopherStatesMu.Unlock()
+
+	select {
+	case <-time.After(2 * time.Second):
+	case <-ctx.Done():
+	}
+}
+
+func (d *Dinner) monitor(ctx context.Context) {
+	defer d.wg.Done()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			d.philosopherStatesMu.Lock()
+			for i := 0; i < d.philosopherCount; i++ {
+				fmt.Printf("p[%v] is %8v\t", i, d.philosopherStates[i])
+			}
+			fmt.Println()
+			d.philosopherStatesMu.Unlock()
+
+		}
+
+		select {
+		case <-time.After(time.Second):
+		case <-ctx.Done():
+			return
+		}
+	}
+
 }

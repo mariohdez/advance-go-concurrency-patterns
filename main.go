@@ -14,7 +14,7 @@ func main() {
 
 	dinner.Start(ctx)
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(10 * time.Second)
 	fmt.Println("cancelling the simulation")
 	cancel()
 
