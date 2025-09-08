@@ -10,6 +10,7 @@ import (
 type Dinner struct {
 	pCount int
 	forks  []sync.Mutex
+	wg     sync.WaitGroup
 }
 
 func NewDinner(numPhilosophers int) *Dinner {
@@ -19,15 +20,19 @@ func NewDinner(numPhilosophers int) *Dinner {
 	}
 }
 
-func (d *Dinner) Start(ctx context.Context, wg *sync.WaitGroup) {
+func (d *Dinner) Start(ctx context.Context) {
 	for i := 0; i < d.pCount; i++ {
-		wg.Add(1)
-		go d.philosopherWorker(ctx, i, wg)
+		d.wg.Add(1)
+		go d.philosopherWorker(ctx, i)
 	}
 }
 
-func (d *Dinner) philosopherWorker(ctx context.Context, pID int, wg *sync.WaitGroup) {
-	defer wg.Done()
+func (d *Dinner) Wait() {
+	d.wg.Wait()
+}
+
+func (d *Dinner) philosopherWorker(ctx context.Context, pID int) {
+	defer d.wg.Done()
 
 	for {
 		select {
