@@ -3,12 +3,9 @@
 BINARY_NAME="dinning"
 
 if [ -f "$BINARY_NAME" ]; then
-	echo "removing old binary..."
 	rm "$BINARY_NAME"
 fi
 
-
-echo "building new binary..."
 
 go build -o "$BINARY_NAME" .
 
