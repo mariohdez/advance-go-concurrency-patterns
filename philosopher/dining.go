@@ -27,13 +27,13 @@ type Dinner struct {
 
 func NewDinner(numPhilosophers int) *Dinner {
 	pStates := make([]state, 0, numPhilosophers)
-	for i := 0; i < numPhilosophers; i++ {
+	for range numPhilosophers {
 		pStates = append(pStates, pendingState)
 	}
 
 	return &Dinner{
 		philosopherCount:  numPhilosophers,
-		forks:             make([]sync.Mutex, numPhilosophers, numPhilosophers),
+		forks:             make([]sync.Mutex, numPhilosophers),
 		philosopherStates: pStates,
 	}
 }

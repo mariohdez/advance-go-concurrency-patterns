@@ -12,7 +12,7 @@ func main() {
 	doneCh := make(chan struct{})
 
 	var pWG sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		pWG.Add(1)
 		go func() {
 			defer pWG.Done()
@@ -21,7 +21,7 @@ func main() {
 	}
 
 	var cWG sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		cWG.Add(1)
 		go func() {
 			defer cWG.Done()
