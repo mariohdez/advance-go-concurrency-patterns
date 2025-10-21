@@ -2,17 +2,22 @@ package ratelimit
 
 import "time"
 
-type Service struct {
-	bucket chan struct{}
-	ticker *time.Ticker
-	done   chan struct{}
+type Ticker interface {
+	C() <-chan time.Time
+	Stop()
 }
 
-func New(rate float64, limit int) *Service {
+type Service struct {
+	bucket chan struct{}
+	done   chan struct{}
+	ticker Ticker
+}
+
+func New(rate float64, limit int, ticker Ticker) *Service {
 	srv := &Service{
 		bucket: make(chan struct{}, limit),
 		done:   make(chan struct{}),
-		ticker: time.NewTicker(time.Duration(float64(time.Second) / rate)),
+		ticker: ticker,
 	}
 	for range limit {
 		srv.bucket <- struct{}{}
@@ -22,7 +27,7 @@ func New(rate float64, limit int) *Service {
 			select {
 			case <-srv.done:
 				return
-			case <-srv.ticker.C:
+			case <-srv.ticker.C():
 				select {
 				case srv.bucket <- struct{}{}:
 				default:
