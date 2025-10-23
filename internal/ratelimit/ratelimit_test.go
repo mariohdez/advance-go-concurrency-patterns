@@ -34,15 +34,12 @@ func (s *rateLimitSuite) SetupSubTest() {
 	s.SetupTest()
 }
 
-func (s *rateLimitSuite) TearDownTest() {
+func (s *rateLimitSuite) TearDownSubTest() {
 	s.ticker.EXPECT().Stop()
 	s.rateLimiter.Close()
 
 	s.ctrl.Finish()
-}
 
-func (s *rateLimitSuite) TearDownSubTest() {
-	s.TearDownTest()
 }
 
 func (s *rateLimitSuite) TestWait() {
