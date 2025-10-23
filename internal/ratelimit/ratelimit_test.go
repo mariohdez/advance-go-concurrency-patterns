@@ -34,6 +34,17 @@ func (s *rateLimitSuite) SetupSubTest() {
 	s.SetupTest()
 }
 
+func (s *rateLimitSuite) TearDownTest() {
+	s.ticker.EXPECT().Stop()
+	s.rateLimiter.Close()
+
+	s.ctrl.Finish()
+}
+
+func (s *rateLimitSuite) TearDownSubTest() {
+	s.TearDownTest()
+}
+
 func (s *rateLimitSuite) TestWait() {
 	s.Run("when no rehydration of bucket", func() {
 		s.rateLimiter.Wait()
@@ -41,9 +52,6 @@ func (s *rateLimitSuite) TestWait() {
 		s.rateLimiter.Wait()
 		s.rateLimiter.Wait()
 		s.rateLimiter.Wait()
-
-		s.ticker.EXPECT().Stop()
-		s.rateLimiter.Close()
 	})
 
 	s.Run("when need to rehydrate tokens", func() {
@@ -69,8 +77,6 @@ func (s *rateLimitSuite) TestWait() {
 		done := make(chan struct{})
 		go func() {
 			wg.Wait()
-			s.ticker.EXPECT().Stop()
-			s.rateLimiter.Close()
 
 			close(done)
 		}()
