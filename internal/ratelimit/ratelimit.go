@@ -13,7 +13,7 @@ type Service struct {
 	ticker Ticker
 }
 
-func New(rate float64, limit int, ticker Ticker) *Service {
+func New(limit int, ticker Ticker) *Service {
 	srv := &Service{
 		bucket: make(chan struct{}, limit),
 		done:   make(chan struct{}),
