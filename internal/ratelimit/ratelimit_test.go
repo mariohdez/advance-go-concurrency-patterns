@@ -55,7 +55,6 @@ func (s *rateLimitSuite) TestWait() {
 
 		var wg sync.WaitGroup
 		blocked := make(chan struct{})
-
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
