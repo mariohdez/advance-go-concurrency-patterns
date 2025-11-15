@@ -8,8 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sync"
 	"time"
+
+	"net/http"         // 👈 Add this line for the server
+	_ "net/http/pprof" // 👈 Add this line
 )
 
 type Work struct {
@@ -29,10 +33,18 @@ func main() {
 		log.Fatal("Usage: go run main.go <directory> <regex>")
 	}
 
-	workCh := make(chan Work, 100)
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
+	numCores := runtime.NumCPU()
+	slog.Info("Cores Information",
+		"logical_cores", numCores)
+
+	workCh := make(chan Work, numCores*2)
 
 	var wg sync.WaitGroup
-	for range 100 {
+	for range numCores * 2 {
 		wg.Add(1)
 
 		go func() {
