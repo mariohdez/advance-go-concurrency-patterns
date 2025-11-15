@@ -39,7 +39,6 @@ func (s *rateLimitSuite) TearDownSubTest() {
 	s.rateLimiter.Close()
 
 	s.ctrl.Finish()
-
 }
 
 func (s *rateLimitSuite) TestWait() {
