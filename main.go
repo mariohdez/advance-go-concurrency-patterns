@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"net/http"         // 👈 Add this line for the server
-	_ "net/http/pprof" // 👈 Add this line
+	"net/http"
+	_ "net/http/pprof"
 )
 
 type Work struct {
@@ -40,11 +40,12 @@ func main() {
 	numCores := runtime.NumCPU()
 	slog.Info("Cores Information",
 		"logical_cores", numCores)
+	concurrency := numCores * 2
 
-	workCh := make(chan Work, numCores*2)
+	workCh := make(chan Work, concurrency)
 
 	var wg sync.WaitGroup
-	for range numCores * 2 {
+	for range concurrency {
 		wg.Add(1)
 
 		go func() {
